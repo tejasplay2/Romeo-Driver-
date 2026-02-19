@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2D Car Game — Shoot Edition with Trappers</title>
+  <style>
+    body {    
+      margin: 0;    
+      overflow: hidden;    
+      font-family: Arial, sans-serif;    
+      background: black;    
+    }    
+    canvas {    
+      display: block;    
+    }    
+    #shootButtonContainer {    
+      position: absolute;    
+      bottom: 30px;    
+      left: 30px;    
+      width: 80px;    
+      height: 80px;    
+      z-index: 9;    
+      display: none;    
+      cursor: pointer;    
+    }    
+    #shootButton {    
+      width: 80px;    
+      height: 80px;    
+      background: url('shoot.png') no-repeat center center/contain;    
+      border: none;    
+      cursor: pointer;    
+      transition: transform 0.05s;    
+      user-select: none;    
+      -webkit-user-select: none;    
+      -moz-user-select: none;    
+      -ms-user-select: none;    
+      position: relative;    
+      z-index: 9;    
+    }    
+    #shootButton:active {    
+      transform: scale(0.95);    
+    }    
+    #shootButton.frozen {    
+      opacity: 0.3;    
+      cursor: not-allowed;    
+    }    
+    #freezeIndicator {    
+      position: absolute;    
+      bottom: 0;    
+      left: 0;    
+      width: 100%;    
+      height: 100%;    
+      font-size: 80px;    
+      display: none;    
+      z-index: 10;    
+      align-items: center;    
+      justify-content: center;    
+      animation: pulse 0.5s infinite alternate;    
+      pointer-events: none;    
+    }    
+    @keyframes pulse {    
+      0% { transform: scale(1); }    
+      100% { transform: scale(1.2); }    
+    }    
+
+    #playerBanner {    
+      position: absolute;    
+      top: 15px;    
+      left: 15px;    
+      width: 160px;    
+      height: 55px;    
+      background: url('Picsart_25-10-05_15-32-52-688.jpg') no-repeat center center/cover;    
+      border-radius: 10px;    
+      display: none;    
+      align-items: center;    
+      padding: 6px;    
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);    
+      z-index: 20;    
+      cursor: pointer;    
+    }    
+    .bannerRankBadge {  
+      position: absolute;  
+      top: -8px;  
+      right: -8px;  
+      background: linear-gradient(135deg, #FFD700, #FFA500);  
+      color: #000;  
+      font-size: 11px;  
+      font-weight: bold;  
+      padding: 3px 6px;  
+      border-radius: 12px;  
+      text-shadow: none;  
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);  
+      z-index: 21;  
+    }  
+
+    .leaderboardBanner {    
+      width: 220px;    
+      height: 80px;    
+      background: url('Picsart_25-10-05_15-32-52-688.jpg') no-repeat center center/cover;    
+      border-radius: 12px;    
+      display: flex;    
+      align-items: center;    
+      padding: 8px;    
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);    
+      margin: 10px 0;    
+      z-index: 26;    
+      position: relative;    
+      transition: width 0.3s, height 0.3s;    
+    }    
+    .leaderboardBanner.small {    
+      width: 180px;    
+      height: 60px;    
+    }    
+    .bannerRank {    
+      position: absolute;    
+      top: 5px;    
+      left: 5px;    
+      font-size: 12px;    
+      color: white;    
+      font-weight: bold;    
+      text-shadow: 1px 1px 2px black;    
+      z-index: 27;    
+      transition: font-size 0.3s;    
+    }    
+    .bannerRank.small {    
+      font-size: 10px;    
+    }    
+
+    .bannerAvatar {    
+      width: 40px;    
+      height: 40px;    
+      border-radius: 50%;    
+      border: 2px solid white;    
+      display: flex;    
+      align-items: center;    
+      justify-content: center;    
+      font-size: 22px;    
+      background: #222;    
+      flex-shrink: 0;    
+      transition: width 0.3s, height 0.3s;    
+    }    
+    .bannerAvatar.small {    
+      width: 40px;    
+      height: 40px;    
+      font-size: 22px;    
+    }    
+
+    .bannerInfo {    
+      margin-left: 8px;    
+      color: white;    
+      font-weight: bold;    
+      font-size: 12px;    
+      text-shadow: 1px 1px 3px black;    
+      display: flex;    
+      flex-direction: column;    
+      transition: font-size 0.3s;    
+      line-height: 1.3;  
+    }    
+    .bannerInfo.small {    
+      font-size: 11px;    
+      line-height: 1.2;  
+    }    
+    .bannerInfo span {    
+      white-space: nowrap;    
+      overflow: hidden;    
+      text-overflow: ellipsis;    
+      max-width: 90px;  
+    }  
+    .bannerInfo .id-text {    
+      font-size: 0.8em;    
+      color: #aaa;    
+      margin-top: 2px;  
+    }  
+    .bannerInfo.small .id-text {    
+      font-size: 0.75em;    
+    }  
+
+    #avatar {    
+      width: 40px;    
+      height: 40px;    
+      border-radius: 50%;    
+      border: 2px solid white;    
+      display: flex;    
+      align-items: center;    
+      justify-content: center;    
+      font-size: 22px;    
+      background: #222;    
+      flex-shrink: 0;    
+      cursor: pointer;    
+    }    
+    #playerInfo {    
+      margin-left: 8px;    
+      color: white;    
+      font-weight: bold;    
+      font-size: 12px;    
+      text-shadow: 1px 1px 3px black;    
+      display: flex;    
+      flex-direction: column;    
+      line-height: 1.3;  
+    }    
+    #playerInfo .id-text {    
+      font-size: 0.8em;    
+      color: #aaa;    
+      margin-top: 2px;  
+    }  
+    #bannerName {    
+      display: block;    
+    }    
+    #bannerEditInput {    
+      display: none;    
+      font-size: 12px;    
+      padding: 2px;    
+      border-radius: 4px;    
+      border: none;    
+      width: 80px;    
+    }    
+    #bannerID {    
+      font-size: 10px;    
+    }    
+
+    #emojiPopup {    
+      display: none;    
+      position: fixed;    
+      top: 0;    
+      left: 0;    
+      width: 100vw;    
+      height: 100vh;    
+      z-index: 1001;    
+      background: rgba(0, 0, 0, 0.5);    
+      align-items: center;    
+      justify-content: center;    
+    }    
+    #emojiPanel {    
+      background: white;    
+      border-radius: 15px;    
+      padding: 15px;    
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);    
+      display: flex;    
+      flex-wrap: wrap;    
+      gap: 10px;    
+      max-width: 340px;    
+    }    
+    #emojiPanel span {    
+      font-size: 31px;    
+      padding: 9px 7px;    
+      border-radius: 8px;    
+      cursor: pointer;    
+      transition: background 0.16s;    
+    }    
+    #emojiPanel span:hover {    
+      background: #e8e8e8;    
+    }    
+
+    #loadingScreen {    
+      position: absolute;    
+      top: 0;    
+      left: 0;    
+      width: 100%;    
+      height: 100%;    
+      background: url('Picsart_25-10-05_16-39-32-535.jpg') no-repeat center center/cover;    
+      display: flex;    
+      align-items: center;    
+      justify-content: center;    
+      flex-direction: column;    
+      font-size: 24px;    
+      color: #fff;    
+      z-index: 10;    
+    }    
+    #loadingBarContainer {    
+      width: 60%;    
+      height: 30px;    
+      background: rgba(255, 255, 255, 0.3);    
+      border-radius: 15px;    
+      margin-top: 20px;    
+    }    
+    #loadingBar {    
+      width: 0%;    
+      height: 100%;    
+      background: white;    
+      border-radius: 15px;    
+    }    
+
+    #nameScreen, #menuScreen {    
+      position: absolute;    
+      top: 0;    
+      left: 0;    
+      width: 100%;    
+      height: 100%;    
+      display: none;    
+      align-items: center;    
+      justify-content: center;    
+      flex-direction: column;    
+      z-index: 9;    
+    }    
+    #nameScreen {    
+      background: url('Picsart_25-10-05_15-32-52-688.jpg') no-repeat center center/cover;    
+    }    
+    #nameBox {    
+      background: rgba(255, 255, 255, 0.8);    
+      padding: 30px;    
+      border-radius: 15px;    
+      text-align: center;    
+    }    
+    #playerName {    
+      font-size: 20px;    
+      padding: 10px;    
+      width: 200px;    
+      border-radius: 10px;    
+      border: 1px solid #ccc;    
+    }    
+    #okBtn {    
+      margin-top: 15px;    
+      padding: 10px 30px;    
+      font-size: 20px;    
+      border: none;    
+      border-radius: 10px;    
+      background: #00bfff;    
+      color: white;    
+      cursor: pointer;    
+    }    
+    #okBtn:hover {    
+      background: #0099cc;    
+    }    
+
+    #menuScreen {    
+      background: url('Picsart_25-10-05_16-39-32-535.jpg') no-repeat center center/cover;    
+      gap: 30px;    
+    }    
+    .menuBtnWrapper {    
+      display: flex;    
+      gap: 30px;    
+      align-items: center;    
+      justify-content: center;    
+      flex-wrap: wrap;    
+    }    
+    .menuBtn {    
+      padding: 12px 25px;    
+      font-size: 22px;    
+      border: none;    
+      border-radius: 12px;    
+      background: rgba(0, 191, 255, 0.8);    
+      color: white;    
+      cursor: pointer;    
+      transition: transform 0.3s ease;    
+      animation: zoomInOut 2s infinite;    
+    }    
+    .menuBtn:hover {    
+      background: rgba(0, 153, 204, 0.9);    
+      animation: none;    
+      transform: scale(1.1);    
+    }    
+    #leaderboardBtnImg {    
+      width: 180px;    
+      height: auto;    
+      cursor: pointer;    
+      border-radius: 10px;    
+      transition: transform 0.3s ease;    
+      animation: zoomInOut 2.2s infinite;    
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));    
+    }    
+    #leaderboardBtnImg:hover {    
+      animation: none;    
+      transform: scale(1.12);    
+    }    
+    #menuBottomImage {    
+      width: 150px;    
+      height: auto;    
+      border-radius: 10px;    
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);    
+      cursor: pointer;    
+      transition: transform 0.3s ease;    
+      animation: zoomInOut 2.4s infinite;    
+    }    
+    #menuBottomImage:hover {    
+      animation: none;    
+      transform: scale(1.1);    
+    }    
+    @keyframes zoomInOut {    
+      0%, 100% { transform: scale(1); }    
+      50% { transform: scale(1.08); }    
+    }    
+
+    #tapToPlayOverlay {    
+      position: absolute;    
+      top: 0;    
+      left: 0;    
+      width: 100%;    
+      height: 100%;    
+      background: rgba(0, 0, 0, 0.5);    
+      display: none;    
+      align-items: center;    
+      justify-content: center;    
+      color: white;    
+      font-size: 36px;    
+      font-weight: bold;    
+      z-index: 15;    
+      cursor: pointer;    
+    }    
+    #imageToPlayOverlay {    
+      position: absolute;    
+      top: 0;    
+      left: 0;    
+      width: 100vw;    
+      height: 100vh;    
+      background: rgba(0, 0, 0, 0.7);    
+      display: none;    
+      align-items: center;    
+      justify-content: center;    
+      flex-direction: column;    
+      z-index: 16;    
+    }    
+    #imageToPlayOverlay .background-image {    
+      position: absolute;    
+      top: 0;    
+      left: 0;    
+      width: 100%;    
+      height: 100%;    
+      object-fit: cover;    
+      border-radius: 0;    
+      box-shadow: none;    
+    }    
+    #playButtonContainer {    
+      position: absolute;    
+      top: 10%;    
+      z-index: 17;    
+      cursor: pointer;    
+      display: flex;    
+      justify-content: center;    
+      align-items: center;    
+      width: 100%;    
+    }    
+    #playButtonImg {    
+      width: 200px;    
+      height: auto;    
+      border-radius: 15px;    
+      box-shadow: 0 0 25px rgba(0, 255, 255, 0.9);    
+      animation: bounce 1.5s infinite alternate;    
+    }    
+    @keyframes bounce {    
+      0% { transform: translateY(0); }    
+      100% { transform: translateY(-10px); }    
+    }    
+
+    #challengeImageContainer {    
+      position: absolute;    
+      bottom: 5%;    
+      left: 50%;    
+      transform: translateX(-50%);    
+      z-index: 17;    
+      display: flex;    
+      justify-content: center;    
+      align-items: center;    
+      width: 100%;    
+    }    
+    #challengeImage {    
+      width: 200px;    
+      height: auto;    
+      border-radius: 15px;    
+      box-shadow: 0 0 25px rgba(0, 255, 255, 0.9);    
+      cursor: pointer;    
+      animation: bounce 1.5s infinite alternate;    
+      animation-delay: 0.3s;    
+    }    
+
+    #comingSoonOverlay {    
+      display: none;    
+      position: absolute;    
+      top: 0;    
+      left: 0;    
+      width: 100vw;    
+      height: 100vh;    
+      background: rgba(0, 0, 0, 0.7);    
+      z-index: 100;    
+      align-items: center;    
+      justify-content: center;    
+      color: white;    
+      font-size: 48px;    
+      font-weight: bold;    
+      text-shadow: 2px 2px 4px black;    
+    }    
+
+    #joystick {    
+      position: absolute;    
+      bottom: 30px;    
+      left: 50%;    
+      transform: translateX(-50%);    
+      width: 120px;    
+      height: 120px;    
+      background: rgba(255, 255, 255, 0.2);    
+      border-radius: 50%;    
+      touch-action: none;    
+      display: none;    
+      z-index: 8;    
+    }    
+    #stick {    
+      position: absolute;    
+      width: 60px;    
+      height: 60px;    
+      background: rgba(255, 255, 255, 0.6);    
+      border-radius: 50%;    
+      top: 30px;    
+      left: 30px;    
+    }    
+
+    #scoreHeartsBox {    
+      position: absolute;    
+      top: 20px;    
+      left: 50%;    
+      transform: translateX(-50%);    
+      z-index: 8;    
+      display: none;    
+      text-align: center;    
+    }    
+    #score {    
+      display: inline-block;    
+      font-size: 28px;    
+      color: white;    
+      margin-bottom: 2px;    
+    }    
+    #hearts {    
+      display: inline-block;    
+      font-size: 36px;    
+      color: limegreen;    
+      margin-left: 15px;    
+      vertical-align: middle;    
+      white-space: nowrap;    
+    }    
+
+    #gameOverMenuImg {    
+      display: none;    
+      position: absolute;    
+      top: 50%;    
+      left: 50%;    
+      transform: translate(-50%, -50%);    
+      z-index: 15;    
+      max-width: 250px;    
+      max-height: 300px;    
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);    
+      border-radius: 15px;    
+      background: #fff;    
+      cursor: pointer;    
+    }    
+    #gameOverScore {    
+      display: none;    
+      position: absolute;    
+      top: calc(50% + 160px);    
+      left: 50%;    
+      transform: translateX(-50%);    
+      color: white;    
+      font-size: 24px;    
+      text-align: center;    
+      z-index: 15;    
+    }    
+
+    #coinDisplay {    
+      position: absolute;    
+      top: 20px;    
+      right: 20px;    
+      color: white;    
+      font-size: 24px;    
+      text-shadow: 1px 1px 3px black;    
+      z-index: 10;    
+      display: flex;    
+      flex-direction: column;    
+      align-items: flex-end;    
+    }    
+    #coinDisplay.deducted {    
+      color: red;    
+    }    
+    #deductedAmount {    
+      font-size: 16px;    
+      color: red;    
+      margin-top: 2px;    
+    }    
+
+    #pauseButton {    
+      position: absolute;    
+      top: 20px;    
+      right: 20px;    
+      font-size: 36px;    
+      color: white;    
+      text-shadow: 1px 1px 3px black;    
+      cursor: pointer;    
+      z-index: 10;    
+      display: none;    
+    }    
+    #pauseMenu {    
+      position: absolute;    
+      top: 0;    
+      left: 0;    
+      width: 100%;    
+      height: 100%;    
+      background: rgba(0, 0, 0, 0.7);    
+      display: none;    
+      align-items: center;    
+      justify-content: center;    
+      flex-direction: column;    
+      z-index: 15;    
+    }    
+    .pauseBtn {    
+      padding: 12px 25px;    
+      font-size: 22px;    
+      border: none;    
+      border-radius: 12px;    
+      background: rgba(0, 191, 255, 0.8);    
+      color: white;    
+      cursor: pointer;    
+      margin: 10px;    
+    }    
+    .pauseBtn:hover {    
+      background: rgba(0, 153, 204, 0.9);    
+    }    
+
+    #rankScreen {    
+      position: absolute;    
+      top: 0;    
+      left: 0;    
+      width: 100%;    
+      height: 100%;    
+      background: url('Picsart_25-10-05_15-32-52-688.jpg') no-repeat center center/cover;    
+      display: none;    
+      align-items: center;    
+      justify-content: center;    
+      flex-direction: column;    
+      z-index: 25;    
+      padding: 20px;    
+      box-sizing: border-box;    
+    }    
+    #rankScreen .rankList {    
+      max-height: 70vh;    
+      overflow-y: auto;    
+      width: 100%;    
+      max-width: 300px;    
+      margin-top: 60px;    
+      display: flex;    
+      flex-direction: column;    
+      align-items: center;    
+    }    
+    #closeButton {    
+      position: absolute;    
+      bottom: 20px;    
+      left: 50%;    
+      transform: translateX(-50%);    
+      padding: 12px 25px;    
+      font-size: 20px;    
+      border: none;    
+      border-radius: 12px;    
+      background: rgba(255, 0, 0, 0.8);    
+      color: white;    
+      cursor: pointer;    
+      z-index: 30;    
+    }    
+    #closeButton:hover {    
+      background: rgba(255, 0, 0, 0.9);    
+    }    
+    #leaderboardTitle {    
+      position: absolute;    
+      top: 15px;    
+      left: 50%;    
+      transform: translateX(-50%);    
+      font-size: 28px;    
+      color: white;    
+      font-weight: bold;    
+      text-shadow: 1px 1px 3px black;    
+      z-index: 26;    
+    }    
+    #multiplayerBtn {    
+      position: absolute;    
+      top: 15px;    
+      right: 15px;    
+      width: 50px;    
+      height: 50px;    
+      font-size: 28px;    
+      background: rgba(0, 0, 0, 0.3);    
+      border: 2px solid rgba(255, 255, 255, 0.5);    
+      border-radius: 50%;    
+      cursor: pointer;    
+      z-index: 28;    
+      display: none;    
+      align-items: center;    
+      justify-content: center;    
+      transition: transform 0.3s ease, background 0.3s ease;    
+      box-shadow: 0 0 15px rgba(0, 191, 255, 0.6);    
+      padding: 0;    
+    }    
+    #multiplayerBtn:hover {    
+      transform: scale(1.2);    
+      background: rgba(0, 191, 255, 0.4);    
+      box-shadow: 0 0 25px rgba(0, 191, 255, 0.8);    
+    }    
+
+    #backButton {    
+      position: absolute;    
+      top: 15px;    
+      left: 15px;    
+      width: 50px;    
+      height: 50px;    
+      background: url('Picsart_25-10-16_16-09-54-577.png') no-repeat center center/contain;    
+      border: none;    
+      cursor: pointer;    
+      z-index: 30;    
+      padding: 0;    
+      border-top-left-radius: 10px;    
+    }    
+
+    #coinCollectNotification {    
+      position: absolute;    
+      display: none;    
+      color: gold;    
+      padding: 5px;    
+      font-size: 20px;    
+      z-index: 12;    
+      text-shadow: 1px 1px 3px black;    
+      animation: fadeOut 1.5s forwards;    
+    }    
+    @keyframes fadeOut {    
+      0% { opacity: 1; transform: translateY(0); }    
+      50% { opacity: 1; transform: translateY(-20px); }    
+      100% { opacity: 0; transform: translateY(-30px); }    
+    }  
+
+    .online-status {  
+      position: absolute;  
+      top: 5px;  
+      right: 5px;  
+      width: 12px;  
+      height: 12px;  
+      border-radius: 50%;  
+      background-color: #4CAF50;  
+      border: 2px solid white;  
+      z-index: 28;  
+    }  
+    .offline-status {  
+      background-color: #f44336;  
+    }  
+
+    #rankScreen .rankList::-webkit-scrollbar {  
+      width: 8px;  
+    }  
+    #rankScreen .rankList::-webkit-scrollbar-track {  
+      background: rgba(0, 0, 0, 0.2);  
+      border-radius: 4px;  
+    }  
+    #rankScreen .rankList::-webkit-scrollbar-thumb {  
+      background: rgba(255, 255, 255, 0.5);  
+      border-radius: 4px;  
+    }  
+    #rankScreen .rankList::-webkit-scrollbar-thumb:hover {  
+      background: rgba(255, 255, 255, 0.8);  
+    }
+
+    /* New style for max score display */
+    .maxScoreBadge {
+      position: absolute;
+      bottom: -8px;
+      right: -8px;
+      background: linear-gradient(135deg, #00ff00, #008800);
+      color: white;
+      font-size: 9px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 10px;
+      text-shadow: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      z-index: 21;
+    }
+  </style>    
+</head>    
+<body>    
+  <div id="playerBanner">    
+    <div id="avatar"></div>    
+    <div id="playerInfo">    
+      <span id="bannerName">PLAYER</span>    
+      <input type="text" id="bannerEditInput" maxlength="12" />    
+      <span class="id-text" id="bannerID">ID: 1234567890</span>    
+    </div>    
+    <div class="bannerRankBadge" id="bannerRankBadge">#--</div>  
+  </div>    
+
+  <div id="emojiPopup">    
+    <div id="emojiPanel">    
+      <span>👷</span><span>😎</span><span>👻</span><span>💀</span>    
+      <span>👰</span><span>👽</span><span>💃</span><span>👲</span>    
+      <span>😍</span><span>🌹</span><span>👼</span><span>🌻</span>    
+      <span>💂</span><span>😉</span><span>🙄</span><span>😺</span>    
+      <span>❤️</span><span>💘</span><span>💝</span><span>👳</span>    
+      <span>💖</span><span>💞</span><span>👶</span><span>😊</span>    
+      <span>🙏</span><span>🐨</span><span>🔥</span><span>👱</span>    
+      <span>🌸</span><span>🌺</span><span>🌷</span><span>🐸</span>    
+      <span>🐢</span><span>🌠</span><span>💗</span><span>💗</span>  
+      <span>🌈</span><span>🌡️</span><span>🍫</span><span>💓</span>      
+    </div>    
+  </div>    
+
+  <canvas id="game"></canvas>    
+
+  <div id="loadingScreen">    
+    Loading... <span id="percent">0%</span>    
+    <div id="loadingBarContainer"><div id="loadingBar"></div></div>    
+  </div>    
+
+  <div id="nameScreen">    
+    <div id="nameBox">    
+      <h2>Enter Your Name</h2>    
+      <input type="text" id="playerName" placeholder="Your Name" />    
+      <br />    
+      <button id="okBtn">OK</button>    
+    </div>    
+  </div>    
+
+  <div id="menuScreen">    
+    <div class="menuBtnWrapper">    
+      <button class="menuBtn" id="coinShopBtn">Coin Shop</button>    
+      <img id="leaderboardBtnImg" src="leaderboard.png" alt="Leaderboard Button" />    
+    </div>    
+    <img id="menuBottomImage" src="Picsart_25-10-11_13-50-40-200.png" alt="Menu Bottom Image" />    
+    <div id="coinDisplay">    
+      <span id="coinCountText"></span>    
+      <span id="deductedAmount"></span>    
+    </div>    
+  </div>    
+
+  <div id="tapToPlayOverlay">TAP TO PLAY</div>    
+
+  <div id="imageToPlayOverlay">    
+    <div id="backButton"></div>    
+    <img class="background-image" src="20251010_173634.png" alt="Game Background" />    
+    <div id="playButtonContainer">    
+      <img id="playButtonImg" src="Picsart_25-10-11_12-08-46-261.jpg" alt="Play Button" />    
+    </div>    
+    <div id="challengeImageContainer">    
+      <img id="challengeImage" src="Picsart_25-10-11_13-06-24-793.jpg" alt="Challenge Image" />    
+    </div>    
+  </div>    
+
+  <div id="joystick"><div id="stick"></div></div>    
+
+  <div id="shootButtonContainer">    
+    <button id="shootButton"></button>    
+    <div id="freezeIndicator">🕸️</div>    
+  </div>    
+
+  <div id="scoreHeartsBox">    
+    <span id="score">Score: 0</span>    
+    <span id="hearts">😇😇😇😇😇</span>    
+  </div>    
+
+  <img id="gameOverMenuImg" src="Picsart_25-10-04_17-03-18-005.png" alt="Game Over Menu" />    
+  <div id="gameOverScore"></div>    
+
+  <div id="pauseButton">⏸️</div>    
+
+  <div id="pauseMenu">    
+    <button class="pauseBtn" id="continueBtn">Continue</button>    
+    <button class="pauseBtn" id="restartBtn">Restart</button>    
+    <button class="pauseBtn" id="homeBtn">Home</button>    
+  </div>    
+
+  <div id="rankScreen">    
+    <div id="leaderboardTitle">🏆 Leaderboard 🏆</div>    
+    <button id="multiplayerBtn">🫂</button>    
+    <div class="rankList"></div>    
+    <button id="closeButton">Close</button>    
+  </div>    
+
+  <div id="comingSoonOverlay">Coming Soon...</div>    
+
+  <div id="coinCollectNotification"></div>      
+
+  <!-- Audio Elements -->
+  <audio id="tapSound" preload="auto"></audio>
+  <audio id="coinSound" preload="auto"></audio>
+  <audio id="carPassBySound" preload="auto"></audio>
+  <audio id="hitSound" preload="auto"></audio>
+  <audio id="engineSound" loop preload="auto"></audio>
+  <audio id="gameOverSound" preload="auto"></audio>
+  <audio id="laserSound" preload="auto"></audio>
+  <audio id="laser2Sound" loop preload="auto"></audio>
+  <audio id="loadingSound" preload="auto"></audio>
+  <audio id="enemySound" preload="auto"></audio>
+  <audio id="explosionSound" preload="auto"></audio>
+  <audio id="trapperSound" preload="auto"></audio>
+
+  <!-- Background Music -->
+  <audio id="bgMusic" loop preload="auto"></audio>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <script>    
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBuQHfHlLD9t1-exX264nZ85lKX3J3roqg",
+      authDomain: "romeo-driver.firebaseapp.com",
+      databaseURL: "https://romeo-driver-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "romeo-driver",
+      storageBucket: "romeo-driver.firebasestorage.app",
+      messagingSenderId: "834491456571",
+      appId: "1:834491456571:web:789e05fa535c62af0fd01e"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Background Music Setup  
+    const bgMusic = document.getElementById('bgMusic');  
+    bgMusic.src = 'background.mp3';  
+    bgMusic.volume = 0.5;  
+    function playBgMusic() {  
+      bgMusic.play().catch(e => console.log('BG Music autoplay blocked'));  
+    }  
+    function stopBgMusic() {  
+      bgMusic.pause();  
+      bgMusic.currentTime = 0;  
+    }  
+
+    // Sound Manager    
+    const SoundManager = {    
+      sounds: {    
+        tapSound: { file: 'tap.mp3', loop: false, volume: 0.5 },    
+        coinSound: { file: 'coin.mp3', loop: false, volume: 0.2 },    
+        carPassBySound: { file: 'car-pass-by-337871.mp3', loop: false, volume: 0.8 },    
+        hitSound: { file: 'collision.mp3', loop: false, volume: 0.4 },    
+        engineSound: { file: 'engine.mp3', loop: true, volume: 1.0 },    
+        gameOverSound: { file: 'gameover.mp3', loop: false, volume: 0.9 },    
+        laserSound: { file: 'laser.mp3', loop: false, volume: 0.3 },    
+        laser2Sound: { file: 'laser2.mp3', loop: true, volume: 0.3 },    
+        loadingSound: { file: 'loading.mp3', loop: false, volume: 1.0 },    
+        enemySound: { file: 'tap.mp3', loop: false, volume: 0.5 },    
+        explosionSound: { file: 'collision.mp3', loop: false, volume: 0.8 },    
+        trapperSound: { file: 'tap.mp3', loop: false, volume: 0.4 }    
+      },    
+      init: function() {    
+        for (const [id, config] of Object.entries(this.sounds)) {    
+          const audio = document.getElementById(id);    
+          if (audio) {    
+            audio.src = config.file;    
+            audio.volume = config.volume;    
+            audio.loop = config.loop;    
+          }    
+        }    
+      },    
+      play: function(soundId) {    
+        const audio = document.getElementById(soundId);    
+        if (!audio) return;    
+        try {    
+          audio.currentTime = 0;    
+          const playPromise = audio.play();    
+          if (playPromise !== undefined) {    
+            playPromise.catch(() => {});    
+          }    
+        } catch (e) {}    
+      },    
+      stop: function(soundId) {    
+        const audio = document.getElementById(soundId);    
+        if (audio) {    
+          audio.pause();    
+          audio.currentTime = 0;    
+        }    
+      },    
+      pause: function(soundId) {    
+        const audio = document.getElementById(soundId);    
+        if (audio) audio.pause();    
+      },    
+      resume: function(soundId) {    
+        const audio = document.getElementById(soundId);    
+        if (audio) audio.play().catch(() => {});    
+      },    
+      setVolume: function(soundId, volume) {    
+        const audio = document.getElementById(soundId);    
+        if (audio) audio.volume = Math.max(0, Math.min(1, volume));    
+      }    
+    };    
+    SoundManager.init();    
+
+    const bannerRankBadge = document.getElementById('bannerRankBadge');  
+    const avatar = document.getElementById('avatar');    
+    const emojiPopup = document.getElementById('emojiPopup');    
+    const emojiPanel = document.getElementById('emojiPanel');    
+    let savedEmoji = localStorage.getItem('selectedEmoji');    
+    if (savedEmoji) avatar.textContent = savedEmoji;    
+    else avatar.textContent = '👷';    
+
+    avatar.onclick = function (e) {    
+      if (document.getElementById('playerBanner').style.display != 'flex') return;    
+      emojiPopup.style.display = 'flex';    
+      SoundManager.play('tapSound');    
+    };    
+
+    emojiPanel.onclick = function (e) {    
+      if (e.target.tagName === 'SPAN') {    
+        avatar.textContent = e.target.textContent;    
+        localStorage.setItem('selectedEmoji', e.target.textContent);    
+        emojiPopup.style.display = 'none';    
+        SoundManager.play('tapSound');    
+        updatePlayerData();    
+      }    
+    };    
+
+    emojiPopup.onclick = function (e) {    
+      if (e.target === emojiPopup) {    
+        emojiPopup.style.display = 'none';    
+        SoundManager.play('tapSound');    
+      }    
+    };    
+
+    const canvas = document.getElementById('game');    
+    const ctx = canvas.getContext('2d');    
+    canvas.width = window.innerWidth;    
+    canvas.height = window.innerHeight;    
+
+    const playerBanner = document.getElementById('playerBanner');    
+    const bannerName = document.getElementById('bannerName');    
+    const bannerEditInput = document.getElementById('bannerEditInput');    
+    const bannerID = document.getElementById('bannerID');    
+    const loadingScreen = document.getElementById('loadingScreen');    
+    const loadingBar = document.getElementById('loadingBar');    
+    const percentText = document.getElementById('percent');    
+    const nameScreen = document.getElementById('nameScreen');    
+    const playerNameInput = document.getElementById('playerName');    
+    const okBtn = document.getElementById('okBtn');    
+    const menuScreen = document.getElementById('menuScreen');    
+    const menuBottomImage = document.getElementById('menuBottomImage');    
+    const leaderboardBtnImg = document.getElementById('leaderboardBtnImg');    
+    const joystick = document.getElementById('joystick');    
+    const stick = document.getElementById('stick');    
+    const shootButtonContainer = document.getElementById('shootButtonContainer');    
+    const shootButton = document.getElementById('shootButton');    
+    const freezeIndicator = document.getElementById('freezeIndicator');    
+    const scoreHeartsBox = document.getElementById('scoreHeartsBox');    
+    const scoreDiv = document.getElementById('score');    
+    const heartsDiv = document.getElementById('hearts');    
+    const gameOverMenuImg = document.getElementById('gameOverMenuImg');    
+    const gameOverScore = document.getElementById('gameOverScore');    
+    const tapOverlay = document.getElementById('tapToPlayOverlay');    
+    const imageToPlayOverlay = document.getElementById('imageToPlayOverlay');    
+    const playButtonImg = document.getElementById('playButtonImg');    
+    const pauseButton = document.getElementById('pauseButton');    
+    const pauseMenu = document.getElementById('pauseMenu');    
+    const continueBtn = document.getElementById('continueBtn');    
+    const restartBtn = document.getElementById('restartBtn');    
+    const homeBtn = document.getElementById('homeBtn');    
+    const coinDisplay = document.getElementById('coinDisplay');    
+    const coinCountText = document.getElementById('coinCountText');    
+    const deductedAmount = document.getElementById('deductedAmount');    
+    const rankScreen = document.getElementById('rankScreen');    
+    const backButton = document.getElementById('backButton');    
+    const closeButton = document.getElementById('closeButton');    
+    const rankList = document.querySelector('#rankScreen .rankList');    
+    const challengeImage = document.getElementById('challengeImage');    
+    const comingSoonOverlay = document.getElementById('comingSoonOverlay');    
+    const coinCollectNotification = document.getElementById('coinCollectNotification');    
+    const coinShopBtn = document.getElementById('coinShopBtn');    
+    const multiplayerBtn = document.getElementById('multiplayerBtn');    
+
+    let renameCount = parseInt(localStorage.getItem('renameCount') || '0');    
+    let currentPlayerOnline = true; 
+
+    // Max score variable
+    let maxScore = parseInt(localStorage.getItem('maxScore') || '0');
+
+    function generateUniqueId() {    
+      let id = Math.floor(1000000000 + Math.random() * 9000000000).toString();    
+      let playerIds = JSON.parse(localStorage.getItem('playerIds') || '[]');    
+      while (playerIds.includes(id)) {    
+        id = Math.floor(1000000000 + Math.random() * 9000000000).toString();    
+      }    
+      playerIds.push(id);    
+      localStorage.setItem('playerIds', JSON.stringify(playerIds));    
+      return id;    
+    }    
+
+    let playerId = localStorage.getItem('playerId') || generateUniqueId();    
+    localStorage.setItem('playerId', playerId);    
+    bannerID.textContent = `ID: ${playerId}`;    
+
+    // Firestore Player Data Management - UPDATED with maxScore
+    async function updatePlayerData() {
+      const playerRef = db.collection('players').doc(playerId);
+      await playerRef.set({
+        id: playerId,
+        name: playerName,
+        score: score,
+        maxScore: maxScore,
+        emoji: avatar.textContent,
+        online: currentPlayerOnline,
+        lastActive: firebase.firestore.FieldValue.serverTimestamp(),
+        coins: coinCount
+      }, { merge: true });
+    }
+
+    // Get player data from Firestore - UPDATED with maxScore
+    async function getPlayerData() {
+      const playerRef = db.collection('players').doc(playerId);
+      const doc = await playerRef.get();
+      if (doc.exists) {
+        const data = doc.data();
+        playerName = data.name || playerName;
+        score = data.score || 0;
+        // Get maxScore from Firebase, fallback to localStorage
+        maxScore = data.maxScore || parseInt(localStorage.getItem('maxScore') || '0') || 0;
+        localStorage.setItem('maxScore', maxScore);
+        avatar.textContent = data.emoji || avatar.textContent;
+        coinCount = data.coins || 0;
+        bannerName.textContent = playerName;
+        coinCountText.textContent = `🪙 ${coinCount}`;
+      }
+    }
+
+    // Real-time leaderboard listener - UPDATED to use maxScore
+    let leaderboardListener = null;
+    function setupLeaderboardListener() {
+      if (leaderboardListener) {
+        leaderboardListener();
+      }
+      
+      // Order by maxScore instead of score for leaderboard
+      leaderboardListener = db.collection('players')
+        .orderBy('maxScore', 'desc')
+        .onSnapshot((snapshot) => {
+          const players = [];
+          snapshot.forEach((doc) => {
+            players.push(doc.data());
+          });
+          displayLeaderboard(players);
+        });
+    }
+
+    // Update player rank - UPDATED to use maxScore
+    function updatePlayerRank() {  
+      db.collection('players')
+        .orderBy('maxScore', 'desc')
+        .get()
+        .then((snapshot) => {
+          let rank = 1;
+          snapshot.forEach((doc) => {
+            if (doc.data().id === playerId) {
+              bannerRankBadge.textContent = `#${rank}`;
+              return;
+            }
+            rank++;
+          });
+          if (rank > snapshot.size) {
+            bannerRankBadge.textContent = '#--';
+          }
+        });
+    }  
+
+    function showCoinNotification(x, y) {    
+      coinCollectNotification.style.display = 'block';    
+      coinCollectNotification.style.left = `${x - 20}px`;    
+      coinCollectNotification.style.top = `${y - 50}px`;    
+      coinCollectNotification.textContent = '+1 🪙';    
+      setTimeout(() => {    
+        coinCollectNotification.style.display = 'none';    
+      }, 1500);    
+    }    
+
+    function showMenuBanner() {    
+      playerBanner.style.display = 'flex';    
+      menuScreen.style.display = 'flex';    
+      coinCountText.textContent = `🪙 ${coinCount}`;    
+      updatePlayerRank();  
+      playBgMusic();  
+      markCurrentPlayerOnline();  
+    }    
+
+    function hideBanner() {    
+      playerBanner.style.display = 'none';    
+    }    
+
+    function markCurrentPlayerOnline() {  
+      currentPlayerOnline = true;
+      updatePlayerData();
+    }  
+
+    okBtn.onclick = async () => {    
+      let name = playerNameInput.value.trim();    
+      if (!name) name = 'Player';    
+      let existingNames = JSON.parse(localStorage.getItem('playerNames') || '[]');    
+      while (existingNames.includes(name)) {    
+        name += Math.floor(Math.random() * 10);    
+      }    
+      existingNames.push(name);    
+      localStorage.setItem('playerNames', JSON.stringify(existingNames));    
+      localStorage.setItem('playerName', name);    
+      playerName = name;    
+      bannerName.textContent = name;    
+      nameScreen.style.display = 'none';    
+      showMenuBanner();    
+      SoundManager.play('tapSound');    
+      await updatePlayerData();
+    };    
+
+    function handleStartGameClick() {    
+      menuScreen.style.display = 'none';    
+      hideBanner();    
+      imageToPlayOverlay.style.display = 'flex';    
+      startGameBackground();    
+    };    
+
+    menuBottomImage.onclick = () => {    
+      handleStartGameClick();    
+    };    
+
+    playButtonImg.onclick = async (e) => {    
+      e.stopPropagation();    
+      imageToPlayOverlay.style.display = 'none';    
+      gameActive = true;    
+      scoreHeartsBox.style.display = 'block';    
+      joystick.style.display = 'block';    
+      shootButtonContainer.style.display = 'block';    
+      pauseButton.style.display = 'block';    
+      SoundManager.play('engineSound');    
+      stopBgMusic();  
+    };    
+
+    tapOverlay.onclick = () => {    
+      tapOverlay.style.display = 'none';    
+      gameActive = true;    
+      scoreHeartsBox.style.display = 'block';    
+      joystick.style.display = 'block';    
+      shootButtonContainer.style.display = 'block';    
+      pauseButton.style.display = 'block';    
+      SoundManager.play('engineSound');    
+      stopBgMusic();  
+    };    
+
+    gameOverMenuImg.onclick = async () => {    
+      gameOverMenuImg.style.display = 'none';    
+      gameOverScore.style.display = 'none';    
+      await savePlayerScore();    
+      showMenuBanner();  
+      SoundManager.play('tapSound');    
+    };    
+
+    pauseButton.onclick = () => {    
+      if (gameActive) {    
+        gameActive = false;    
+        pauseMenu.style.display = 'flex';    
+        joystick.style.display = 'none';    
+        shootButtonContainer.style.display = 'none';    
+        pauseButton.style.display = 'none';    
+        SoundManager.pause('engineSound');    
+        SoundManager.stop('laserSound');    
+        SoundManager.stop('laser2Sound');    
+        SoundManager.play('tapSound');    
+      }    
+    };    
+
+    continueBtn.onclick = () => {    
+      pauseMenu.style.display = 'none';    
+      gameActive = true;    
+      joystick.style.display = 'block';    
+      shootButtonContainer.style.display = 'block';    
+      pauseButton.style.display = 'block';    
+      SoundManager.play('tapSound');    
+      SoundManager.resume('engineSound');    
+    };    
+
+    restartBtn.onclick = () => {    
+      pauseMenu.style.display = 'none';    
+      startGameBackground();    
+      gameActive = true;    
+      scoreHeartsBox.style.display = 'block';    
+      joystick.style.display = 'block';    
+      shootButtonContainer.style.display = 'block';    
+      pauseButton.style.display = 'block';    
+      SoundManager.play('tapSound');    
+      SoundManager.play('engineSound');    
+      stopBgMusic();  
+    };    
+
+    homeBtn.onclick = async () => {    
+      pauseMenu.style.display = 'none';    
+      gameRunning = false;    
+      gameActive = false;    
+      scoreHeartsBox.style.display = 'none';    
+      joystick.style.display = 'none';    
+      shootButtonContainer.style.display = 'none';    
+      pauseButton.style.display = 'none';    
+      SoundManager.stop('engineSound');    
+      SoundManager.stop('laserSound');    
+      SoundManager.stop('laser2Sound');    
+      const coinsDeducted = Math.min(coinCount, 10);    
+      coinCount = Math.max(0, coinCount - 10);    
+      localStorage.setItem('coinCount', coinCount);    
+      coinDisplay.classList.add('deducted');    
+      coinCountText.textContent = `🪙 ${coinCount}`;    
+      deductedAmount.textContent = `-${coinsDeducted}`;    
+      setTimeout(() => {    
+        coinDisplay.classList.remove('deducted');    
+        deductedAmount.textContent = '';    
+      }, 2000);    
+      showMenuBanner();  
+      SoundManager.play('tapSound');    
+      await updatePlayerData();
+    };    
+
+    playerBanner.onclick = function (e) {    
+      if (e.target === avatar) return;    
+      if (getComputedStyle(playerBanner).display !== 'flex') return;    
+      if (renameCount >= 2) {    
+        alert('⚠️ You can only change your name twice!');    
+        return;    
+      }    
+      bannerName.style.display = 'none';    
+      bannerEditInput.value = playerName;    
+      bannerEditInput.style.display = 'block';    
+      bannerEditInput.focus();    
+      SoundManager.play('tapSound');    
+    };    
+
+    bannerEditInput.addEventListener('blur', finishRename);    
+    bannerEditInput.addEventListener('keydown', (e) => {    
+      if (e.key === 'Enter') finishRename();    
+    });    
+
+    async function finishRename() {    
+      let newName = bannerEditInput.value.trim();    
+      if (!newName) newName = 'Player';    
+      let existingNames = JSON.parse(localStorage.getItem('playerNames') || '[]');    
+      while (existingNames.includes(newName)) {    
+        newName += Math.floor(Math.random() * 10);    
+      }    
+      existingNames.push(newName);    
+      localStorage.setItem('playerNames', JSON.stringify(existingNames));    
+      playerName = newName;    
+      bannerName.textContent = playerName;    
+      localStorage.setItem('playerName', playerName);    
+      bannerEditInput.style.display = 'none';    
+      bannerName.style.display = 'block';    
+      renameCount = parseInt(renameCount) || 0;    
+      renameCount++;    
+      localStorage.setItem('renameCount', renameCount);    
+      if (renameCount >= 2) {    
+        setTimeout(() => {    
+          alert('✅ Rename limit reached — you have used both name changes.');    
+        }, 150);    
+      }    
+      SoundManager.play('tapSound');    
+      await updatePlayerData();
+    }    
+
+    // UPDATED savePlayerScore function with maxScore logic
+    async function savePlayerScore() {
+      // Check if current score is higher than max score
+      if (score > maxScore) {
+        maxScore = score;
+        localStorage.setItem('maxScore', maxScore);
+      }
+      
+      // Save current score (for current game session) and maxScore
+      await updatePlayerData();
+    }    
+
+    // UPDATED displayLeaderboard function to show maxScore
+    function displayLeaderboard(players) {    
+      rankList.innerHTML = '';    
+      if (players.length === 0) {    
+        rankList.innerHTML = '<p style="color: white; font-size: 18px;">No Players Yet!</p>';    
+        return;    
+      }    
+      
+      // Calculate total players count
+      const totalPlayers = players.length;
+      rankList.innerHTML = `<p style="color: white; font-size: 16px; margin: 10px 0;">👥 Total Players: ${totalPlayers}</p>`;    
+      
+      const isSmall = players.length > 5;    
+      players.forEach((player, index) => {    
+        let medal = '';    
+        if (index === 0) medal = ' 🥇';    
+        else if (index === 1) medal = ' 🥈';    
+        else if (index === 2) medal = ' 🥉';    
+        
+        const banner = document.createElement('div');    
+        banner.className = `leaderboardBanner ${isSmall ? 'small' : ''}`;    
+        
+        let isOnline = player.online;  
+        if (player.id === playerId) {  
+          isOnline = currentPlayerOnline;  
+        } else if (player.lastActive) {  
+          const timeDiff = Date.now() - player.lastActive.toDate().getTime();
+          isOnline = timeDiff < 300000;  
+        }  
+        
+        const statusClass = isOnline ? 'online-status' : 'offline-status';
+        
+        // Show maxScore on leaderboard, with current score in smaller text if different
+        const displayMaxScore = player.maxScore || player.score || 0;
+        const currentScore = player.score || 0;
+        let scoreDisplay = `<span>🏆 ${displayMaxScore}</span>`;
+        
+        // If current score is different from max, show both
+        if (currentScore !== 0 && currentScore !== displayMaxScore) {
+          scoreDisplay = `<span>🏆 ${displayMaxScore} <span style="font-size: 0.75em; color: #aaa;">(Now: ${currentScore})</span></span>`;
+        }
+        
+        banner.innerHTML = `    
+          <div class="bannerRank ${isSmall ? 'small' : ''}">#${index + 1}${medal}</div>    
+          <div class="bannerAvatar ${isSmall ? 'small' : ''}">${player.emoji}</div>    
+          <div class="bannerInfo ${isSmall ? 'small' : ''}">    
+            <span>${player.name}</span>    
+            ${scoreDisplay}
+            <span class="id-text">ID: ${player.id}</span>    
+          </div>  
+          <div class="${statusClass}"></div>  
+        `;    
+        rankList.appendChild(banner);    
+      });    
+    }    
+
+    leaderboardBtnImg.onclick = async () => {    
+      menuScreen.style.display = 'none';    
+      playerBanner.style.display = 'none';    
+      rankScreen.style.display = 'flex';    
+      multiplayerBtn.style.display = 'flex';    
+      markCurrentPlayerOnline();  
+      setupLeaderboardListener();
+      playBgMusic();  
+      SoundManager.play('tapSound');    
+    };    
+
+    multiplayerBtn.onclick = (e) => {    
+      e.stopPropagation();    
+      comingSoonOverlay.style.display = 'flex';    
+      playBgMusic();  
+      SoundManager.play('tapSound');    
+    };    
+
+    backButton.onclick = (e) => {    
+      e.stopPropagation();    
+      if (imageToPlayOverlay.style.display === 'flex') {    
+        imageToPlayOverlay.style.display = 'none';    
+        showMenuBanner();  
+      }    
+      SoundManager.play('tapSound');    
+    };    
+
+    closeButton.onclick = (e) => {    
+      e.stopPropagation();    
+      rankScreen.style.display = 'none';    
+      multiplayerBtn.style.display = 'none';    
+      showMenuBanner();  
+      SoundManager.play('tapSound');    
+    };    
+
+    challengeImage.onclick = () => {    
+      comingSoonOverlay.style.display = 'flex';    
+      playBgMusic();  
+      SoundManager.play('tapSound');    
+    };    
+
+    coinShopBtn.onclick = () => {    
+      comingSoonOverlay.style.display = 'flex';    
+      playBgMusic();  
+      SoundManager.play('tapSound');    
+    };    
+
+    comingSoonOverlay.onclick = () => {    
+      comingSoonOverlay.style.display = 'none';    
+      playBgMusic();  
+      SoundManager.play('tapSound');    
+    };    
+
+    let isShootHolding = false;    
+    let isShootFrozen = false;    
+    let freezeTimeRemaining = 0;    
+
+    function onShootDown() {    
+      if (isShootFrozen) return;    
+      if (!isShootHolding) {    
+        isShootHolding = true;    
+        SoundManager.play('laserSound');    
+        setTimeout(() => {    
+          if (isShootHolding) {    
+            SoundManager.play('laser2Sound');    
+          }    
+        }, 200);    
+      }    
+    }    
+
+    function onShootUp() {    
+      isShootHolding = false;    
+      SoundManager.stop('laserSound');    
+      SoundManager.stop('laser2Sound');    
+    }    
+
+    shootButton.addEventListener('mousedown', onShootDown);    
+    shootButton.addEventListener('mouseup', onShootUp);    
+    shootButton.addEventListener('mouseleave', onShootUp);    
+
+    shootButton.addEventListener('touchstart', (e) => {    
+      e.preventDefault();    
+      onShootDown();    
+    });    
+
+    shootButton.addEventListener('touchend', (e) => {    
+      e.preventDefault();    
+      onShootUp();    
+    });    
+
+    shootButton.addEventListener('touchcancel', (e) => {    
+      e.preventDefault();    
+      onShootUp();    
+    });    
+
+    let joy = { x: 0, y: 0 },    
+      dragging = false,    
+      joyCenter = { x: 0, y: 0 };    
+    let playerName = 'Player',    
+      loadPercent = 0,    
+      enemies = [],    
+      coins = [],    
+      lasers = [],    
+      trappers = [],    
+      enemyBullets = [],    
+      coinCount = parseInt(localStorage.getItem('coinCount') || '0'),    
+      score = 0,    
+      hearts = 5,    
+      bgOffset = 0;    
+    let gameRunning = false,    
+      gameActive = false;    
+    let car = { x: canvas.width / 2, y: canvas.height - 150, size: 80, speed: 6 };    
+
+    // Load spaceship images
+    let spaceship1 = new Image();
+    spaceship1.src = 'spaceship1.png';
+    let spaceship2 = new Image();
+    spaceship2.src = 'spaceship2.png';
+    let spaceship3 = new Image();
+    spaceship3.src = 'spaceship3.png';
+    let spaceship4 = new Image();
+    spaceship4.src = 'spaceship4.png';
+    let spaceship5 = new Image();
+    spaceship5.src = 'spaceship5.png';
+
+    let bgImages = [    
+      'Picsart_25-10-05_14-27-48-050.jpg',    
+      'Picsart_26-02-10_18-33-30-129.jpg',    
+      'Picsart_26-02-10_18-33-35-464.jpg'    
+    ];    
+    let currentBgIndex = 0;    
+    let bgImg = new Image();    
+    bgImg.src = bgImages[currentBgIndex];    
+
+    let playerCar = new Image();    
+    playerCar.src = 'Picsart_25-10-02_18-04-06-442.png';    
+    let enemyCar = new Image();    
+    enemyCar.src = 'armored_car_PNG18.png';    
+
+    const roadCenter = canvas.width / 2,    
+      roadWidth = 360,    
+      margin = 30;    
+    const roadLeft = roadCenter - roadWidth / 2 + margin;    
+    const roadRight = roadCenter + roadWidth / 2 - margin;    
+
+    // Track score for spaceship5 spawning
+    let scoreForSpaceship5 = 0;
+    let spaceship5Active = false;
+
+    function updateLoading() {    
+      loadPercent += 2;    
+      loadingBar.style.width = loadPercent + '%';    
+      percentText.textContent = loadPercent + '%';    
+      if (loadPercent === 2) SoundManager.play('loadingSound');    
+      if (loadPercent >= 100) {    
+        loadingScreen.style.display = 'none';    
+        playBgMusic();  
+        let saved = localStorage.getItem('playerName');    
+        if (saved) {    
+          playerName = saved;    
+          bannerName.textContent = saved;    
+          markCurrentPlayerOnline();  
+          showMenuBanner();    
+        } else nameScreen.style.display = 'flex';    
+        SoundManager.stop('loadingSound');    
+      } else requestAnimationFrame(updateLoading);    
+    }    
+    updateLoading();    
+
+    let enemySpawnTimer = 0;    
+    let coinSpawnTimer = 0;    
+    let laserTimer = 0;    
+    let trapperSpawnTimer = 0;    
+    let bgChangeTimer = 0;    
+    let enemyBulletTimer = 0;    
+
+    function startGameBackground() {    
+      enemies = [];    
+      coins = [];    
+      lasers = [];    
+      trappers = [];    
+      enemyBullets = [];    
+      score = 0;    
+      scoreForSpaceship5 = 0;    
+      spaceship5Active = false;    
+      hearts = 5;    
+      bgOffset = 0;    
+      bgChangeTimer = 0;    
+      trapperSpawnTimer = 0;    
+      currentBgIndex = 0;    
+      bgImg.src = bgImages[currentBgIndex];    
+      isShootFrozen = false;    
+      freezeTimeRemaining = 0;    
+      freezeIndicator.style.display = 'none';    
+      shootButton.classList.remove('frozen');    
+      gameRunning = true;    
+      gameActive = false;    
+    }    
+
+    function spawnEnemy() {    
+      const size = 80;    
+      const x = Math.random() * (roadRight - roadLeft - size) + roadLeft + size / 2;    
+      
+      // Randomly decide enemy type
+      const rand = Math.random();
+      let enemyType = 'normal';
+      let health = 1;
+      
+      if (rand < 0.05 && scoreForSpaceship5 >= 10000 && !spaceship5Active) {
+        // Spawn spaceship5 every 10000 points
+        enemyType = 'spaceship5';
+        health = 122;
+        spaceship5Active = true;
+        scoreForSpaceship5 = 0; // Reset counter
+      } else if (rand < 0.1) {
+        // Spawn spaceship4 (health 50)
+        enemyType = 'spaceship4';
+        health = 50;
+      } else if (rand < 0.15) {
+        // Spawn spaceship3 (health 25)
+        enemyType = 'spaceship3';
+        health = 25;
+      } else if (rand < 0.2) {
+        // Spawn spaceship2 (health 1)
+        enemyType = 'spaceship2';
+        health = 1;
+      } else if (rand < 0.25) {
+        // Spawn spaceship1 (health 1)
+        enemyType = 'spaceship1';
+        health = 1;
+      }
+      
+      enemies.push({    
+        x: x,    
+        y: -size,    
+        size: size,    
+        speed: 6 + Math.random() * 3,    
+        passed: false,    
+        type: enemyType,
+        health: health,
+        maxHealth: health
+      });    
+    }    
+
+    function spawnCoin() {    
+      const size = 40;    
+      const x = Math.random() * (roadRight - roadLeft - size) + roadLeft + size / 2;    
+      coins.push({    
+        x: x,    
+        y: -size,    
+        size: size,    
+        speed: 6,    
+      });    
+    }    
+
+    function spawnTrapper() {    
+      const size = 80;    
+      const x = Math.random() * (roadRight - roadLeft - size) + roadLeft + size / 2;    
+      trappers.push({    
+        x: x,    
+        y: -size,    
+        size: size,    
+        speed: 5,    
+        passed: false,    
+      });    
+    }    
+
+    function shootLaser() {    
+      if (gameActive && isShootHolding && !isShootFrozen) {    
+        lasers.push({    
+          x: car.x,    
+          y: car.y - 50,    
+          vx: 0,    
+          vy: -15,    
+          size: 8    
+        });    
+      }    
+    }    
+
+    function updateLasers() {    
+      for (let i = lasers.length - 1; i >= 0; i--) {    
+        let laser = lasers[i];    
+        laser.y += laser.vy;    
+        ctx.fillStyle = '#FF0000';    
+        ctx.fillRect(laser.x - laser.size/2, laser.y, laser.size, 20);    
+        ctx.shadowBlur = 10;  
+        ctx.shadowColor = '#FF0000';  
+        ctx.fillRect(laser.x - laser.size/2, laser.y, laser.size, 20);  
+        ctx.shadowBlur = 0;  
+        if (laser.y < 0) {    
+          lasers.splice(i, 1);    
+          continue;    
+        }    
+        for (let j = enemies.length - 1; j >= 0; j--) {    
+          let e = enemies[j];    
+          let dist = Math.sqrt((laser.x - e.x) ** 2 + (laser.y - e.y) ** 2);    
+          if (dist < laser.size + e.size / 2) {    
+            e.health--;    
+            lasers.splice(i, 1);    
+            if (e.health <= 0) {    
+              enemies.splice(j, 1);    
+              createExplosion(e.x, e.y);    
+              SoundManager.play('explosionSound');    
+              // Score and coin rewards based on enemy type
+              if (e.type === 'spaceship1') {
+                score += 50;
+                coinCount += 5;
+              } else if (e.type === 'spaceship2') {
+                score += 100;
+                coinCount += 10;
+              } else if (e.type === 'spaceship3') {
+                score += 150;
+                coinCount += 15;
+              } else if (e.type === 'spaceship4') {
+                score += 200;
+                coinCount += 20;
+              } else if (e.type === 'spaceship5') {
+                score += 5000;
+                coinCount += 10000;
+              } else {
+                score += 50;
+                coinCount += 5;
+              }
+              localStorage.setItem('coinCount', coinCount);
+              coinCountText.textContent = `🪙 ${coinCount}`;
+            } else {    
+              SoundManager.play('hitSound');    
+            }    
+            break;    
+          }    
+        }    
+      }    
+    }    
+
+    function createExplosion(x, y) {    
+      ctx.save();    
+      ctx.globalAlpha = 0.8;    
+      ctx.fillStyle = '#FF6600';    
+      ctx.beginPath();    
+      ctx.arc(x, y, 40, 0, Math.PI * 2);    
+      ctx.fill();    
+      ctx.fillStyle = '#FFAA00';    
+      ctx.beginPath();    
+      ctx.arc(x, y, 25, 0, Math.PI * 2);    
+      ctx.fill();    
+      ctx.restore();    
+    }    
+
+    function updateTrappers() {    
+      for (let i = trappers.length - 1; i >= 0; i--) {    
+        let t = trappers[i];    
+        t.y += t.speed;    
+        ctx.save();    
+        ctx.font = t.size + 'px Arial';    
+        ctx.textAlign = 'center';    
+        ctx.textBaseline = 'middle';    
+        ctx.fillText('🕸️', t.x, t.y);    
+        ctx.restore();    
+        if (t.y > canvas.height + 100) {    
+          trappers.splice(i, 1);    
+          continue;    
+        }    
+        if (gameActive) {    
+          let dx = car.x - t.x, dy = car.y - t.y, dist = Math.sqrt(dx * dx + dy * dy);    
+          if (dist < car.size / 2 + t.size / 2) {    
+            trappers.splice(i, 1);    
+            isShootFrozen = true;    
+            freezeTimeRemaining = 600;    
+            shootButton.classList.add('frozen');    
+            freezeIndicator.style.display = 'flex';    
+            SoundManager.stop('laser2Sound');    
+            SoundManager.stop('laserSound');    
+            SoundManager.play('hitSound');    
+            score -= 100;    
+            if (score < 0) score = 0;    
+          }    
+        }    
+      }    
+    }    
+
+    function updateEnemies() {    
+      for (let i = enemies.length - 1; i >= 0; i--) {    
+        let e = enemies[i];    
+        e.y += e.speed;    
+        
+        // Draw different images based on enemy type
+        if (e.type === 'spaceship1') {
+          ctx.drawImage(spaceship1, e.x - e.size / 2, e.y - e.size / 2, e.size, e.size);
+        } else if (e.type === 'spaceship2') {
+          ctx.drawImage(spaceship2, e.x - e.size / 2, e.y - e.size / 2, e.size, e.size);
+        } else if (e.type === 'spaceship3') {
+          ctx.drawImage(spaceship3, e.x - e.size / 2, e.y - e.size / 2, e.size, e.size);
+        } else if (e.type === 'spaceship4') {
+          ctx.drawImage(spaceship4, e.x - e.size / 2, e.y - e.size / 2, e.size, e.size);
+        } else if (e.type === 'spaceship5') {
+          ctx.drawImage(spaceship5, e.x - e.size / 2, e.y - e.size / 2, e.size, e.size);
+        } else {
+          ctx.drawImage(enemyCar, e.x - e.size / 2, e.y - e.size / 2, e.size, e.size);
+        }
+        
+        // Draw health bar for all spaceship types
+        if (e.type !== 'normal') {
+          ctx.fillStyle = 'red';
+          ctx.fillRect(e.x - e.size / 2, e.y - e.size / 2 - 15, e.size, 5);
+          ctx.fillStyle = 'green';
+          ctx.fillRect(e.x - e.size / 2, e.y - e.size / 2 - 15, e.size * (e.health / e.maxHealth), 5);
+        }
+        
+        let dy = Math.abs(e.y - car.y);    
+        if (!e.passed && dy < 150) {    
+          e.passed = true;    
+          SoundManager.play('carPassBySound');    
+        }    
+        if (e.y > canvas.height + 100) enemies.splice(i, 1);    
+        if (gameActive) {    
+          let dx = car.x - e.x, dy2 = car.y - e.y, dist = Math.sqrt(dx * dx + dy2 * dy2);    
+          if (dist < car.size / 2 + e.size / 2 - 20) {    
+            enemies.splice(i, 1);    
+            hearts--;    
+            heartsDiv.textContent = '😇'.repeat(hearts);    
+            SoundManager.play('hitSound');    
+            if (hearts <= 0) endGame();    
+          }    
+        }    
+      }    
+    }    
+
+    function updateCoins() {    
+      for (let i = coins.length - 1; i >= 0; i--) {    
+        let c = coins[i];    
+        c.y += c.speed;    
+        if (c.y > canvas.height + 100) {    
+          coins.splice(i, 1);    
+          continue;    
+        }    
+        ctx.save();    
+        ctx.translate(c.x, c.y);    
+        ctx.rotate(Date.now() * 0.01 % (Math.PI * 2));    
+        ctx.font = c.size + 'px Arial';    
+        ctx.fillStyle = 'gold';    
+        ctx.textAlign = 'center';    
+        ctx.textBaseline = 'middle';    
+        ctx.fillText('🪙', 0, 0);    
+        ctx.restore();    
+        if (gameActive) {    
+          let dx = car.x - c.x, dy = car.y - c.y, dist = Math.sqrt(dx * dx + dy * dy);    
+          if (dist < car.size / 2 + c.size / 2) {    
+            coins.splice(i, 1);    
+            coinCount++;    
+            localStorage.setItem('coinCount', coinCount);    
+            coinCountText.textContent = `🪙 ${coinCount}`;    
+            showCoinNotification(c.x, c.y);    
+            SoundManager.play('coinSound');    
+          }    
+        }    
+      }    
+    }    
+
+    // UPDATED endGame function to check and update maxScore
+    function endGame() {    
+      gameRunning = false;    
+      gameActive = false;    
+      scoreHeartsBox.style.display = 'none';    
+      joystick.style.display = 'none';    
+      shootButtonContainer.style.display = 'none';    
+      pauseButton.style.display = 'none';    
+      freezeIndicator.style.display = 'none';    
+      
+      // Check and update maxScore if current score is higher
+      let newRecord = false;
+      if (score > maxScore) {
+        maxScore = score;
+        localStorage.setItem('maxScore', maxScore);
+        newRecord = true;
+      }
+      
+      gameOverMenuImg.style.display = 'block';    
+      gameOverScore.style.display = 'block';    
+      
+      // Show max score in game over screen
+      if (newRecord) {
+        gameOverScore.innerHTML = `🎉 NEW RECORD!<br>Score: ${score}<br>🏆 Max: ${maxScore}`;
+      } else {
+        gameOverScore.innerHTML = `Your Score: ${score}<br>🏆 Max: ${maxScore}`;
+      }
+      
+      SoundManager.stop('engineSound');    
+      SoundManager.stop('laserSound');    
+      SoundManager.stop('laser2Sound');    
+      SoundManager.play('gameOverSound');    
+      hideBanner();    
+      savePlayerScore();    
+    }    
+
+    function animate() {    
+      ctx.clearRect(0, 0, canvas.width, canvas.height);    
+      let imgH = (canvas.width * bgImg.height) / bgImg.width;    
+      for (let y = -imgH + (bgOffset % imgH); y < canvas.height; y += imgH)    
+        ctx.drawImage(bgImg, 0, y, canvas.width, imgH);    
+      if (gameRunning && gameActive) {    
+        bgOffset += 6;    
+        bgChangeTimer++;    
+        
+        // Update score for spaceship5 spawning
+        scoreForSpaceship5 += 1;
+        
+        if (bgChangeTimer > 900) {    
+          currentBgIndex = (currentBgIndex + 1) % bgImages.length;    
+          bgImg.src = bgImages[currentBgIndex];    
+          bgChangeTimer = 0;    
+        }    
+        if (isShootFrozen) {    
+          freezeTimeRemaining--;    
+          if (freezeTimeRemaining <= 0) {    
+            isShootFrozen = false;    
+            shootButton.classList.remove('frozen');    
+            freezeIndicator.style.display = 'none';    
+            if (isShootHolding) {    
+              SoundManager.play('laser2Sound');    
+            }    
+          }    
+        }    
+        if (enemySpawnTimer++ > 40) {    
+          spawnEnemy();    
+          enemySpawnTimer = 0;    
+        }    
+        if (coinSpawnTimer++ > 50) {    
+          spawnCoin();    
+          coinSpawnTimer = 0;    
+        }    
+        if (trapperSpawnTimer++ > Math.random() * 300 + 600) {    
+          spawnTrapper();    
+          trapperSpawnTimer = 0;    
+        }    
+        if (laserTimer++ > 5) {    
+          shootLaser();    
+          laserTimer = 0;    
+        }    
+        updateEnemies();    
+        updateCoins();    
+        updateTrappers();    
+        updateLasers();    
+        score++;    
+        scoreDiv.textContent = 'Score: ' + score;    
+        car.x += joy.x * car.speed;    
+        car.y += joy.y * car.speed;    
+        if (car.x < roadLeft + car.size / 2) car.x = roadLeft + car.size / 2;    
+        if (car.x > roadRight - car.size / 2) car.x = roadRight - car.size / 2;    
+        if (car.y < car.size / 2) car.y = car.size / 2;    
+        if (car.y > canvas.height - car.size / 2) car.y = canvas.height - car.size / 2;    
+      }    
+      let rotationAngle = gameActive ? joy.x * 0.15 : 0;    
+      ctx.save();    
+      ctx.translate(car.x, car.y);    
+      ctx.rotate(rotationAngle);    
+      ctx.drawImage(playerCar, -car.size / 2, -car.size / 2, car.size, car.size);    
+      ctx.restore();    
+      ctx.fillStyle = 'white';    
+      ctx.textAlign = 'center';    
+      ctx.fillText(playerName, car.x, car.y - car.size / 2 - 10);    
+      requestAnimationFrame(animate);    
+    }    
+    animate();    
+
+    // Joystick Controls    
+    joystick.addEventListener('touchstart', (e) => {    
+      dragging = true;    
+      const t = e.touches[0];    
+      joyCenter = { x: t.clientX, y: t.clientY };    
+    });    
+    joystick.addEventListener('touchmove', (e) => {    
+      if (!dragging) return;    
+      const t = e.touches[0];    
+      let dx = t.clientX - joyCenter.x, dy = t.clientY - joyCenter.y, dist = Math.sqrt(dx * dx + dy * dy), max = 40;    
+      if (dist > max) {    
+        dx = (dx / dist) * max;    
+        dy = (dy / dist) * max;    
+      }    
+      stick.style.left = 30 + dx + 'px';    
+      stick.style.top = 30 + dy + 'px';    
+      joy.x = dx / max;    
+      joy.y = dy / max;    
+    });    
+    joystick.addEventListener('touchend', () => {    
+      dragging = false;    
+      joy = { x: 0, y: 0 };    
+      stick.style.left = '30px';    
+      stick.style.top = '30px';    
+    });    
+
+    joystick.addEventListener('mousedown', (e) => {    
+      dragging = true;    
+      const rect = joystick.getBoundingClientRect();    
+      joyCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };    
+    });    
+    document.addEventListener('mousemove', (e) => {    
+      if (!dragging) return;    
+      let dx = e.clientX - joyCenter.x, dy = e.clientY - joyCenter.y, dist = Math.sqrt(dx * dx + dy * dy), max = 40;    
+      if (dist > max) {    
+        dx = (dx / dist) * max;    
+        dy = (dy / dist) * max;    
+      }    
+      stick.style.left = 30 + dx + 'px';    
+      stick.style.top = 30 + dy + 'px';    
+      joy.x = dx / max;    
+      joy.y = dy / max;    
+    });    
+    document.addEventListener('mouseup', () => {    
+      dragging = false;    
+      joy = { x: 0, y: 0 };    
+      stick.style.left = '30px';    
+      stick.style.top = '30px';    
+    });    
+
+    tapOverlay.addEventListener('click', () => { hideBanner(); });    
+    playButtonImg.addEventListener('click', (e) => { hideBanner(); });    
+    scoreHeartsBox.addEventListener('click', hideBanner);    
+    canvas.addEventListener('click', hideBanner);    
+
+    // Note: Removed the leaderboard reset code as it was causing data loss
+    // If you need to reset, do it manually or add a specific reset button
+
+    // Periodic online status update  
+    setInterval(() => {  
+      if (menuScreen.style.display === 'flex' || rankScreen.style.display === 'flex') {  
+        markCurrentPlayerOnline();  
+        updatePlayerData();
+      }  
+    }, 30000);
+
+    // Load player data on startup
+    window.addEventListener('load', async () => {
+      await getPlayerData();
+    });
+  </script>  
+</body>  
+</html>
